@@ -360,6 +360,70 @@ async function uploadDroppedImage(imgArea, adId, file) {
   });
 })();
 
+// ── Resize / Aspect Ratio Toggle ──
+var RESIZE_STORE_KEY = 'norton-revamp-sizes-v1';
+var _platformSizes = {
+  li: ['1.91/1', '1/1', '9/16'],
+  fb: ['1/1', '1.91/1', '9/16'],
+  rd: ['4/3', '1/1', '1.91/1']
+};
+var _sizeLabels = {'1.91/1':'1.91:1', '1/1':'1:1', '9/16':'9:16', '4/3':'4:3'};
+
+function loadSizesLocal() {
+  try { return JSON.parse(localStorage.getItem(RESIZE_STORE_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveSizesLocal(obj) {
+  try { localStorage.setItem(RESIZE_STORE_KEY, JSON.stringify(obj)); } catch(e) {}
+}
+
+function getPlatformKey(adId) {
+  if (adId.startsWith('li-')) return 'li';
+  if (adId.startsWith('meta-')) return 'fb';
+  if (adId.startsWith('rd-')) return 'rd';
+  return null;
+}
+
+function applySize(imgArea, ratio) {
+  if (imgArea) imgArea.style.aspectRatio = ratio;
+}
+
+(function initResizeButtons() {
+  var saved = loadSizesLocal();
+  document.querySelectorAll('.ad-block').forEach(function(block) {
+    var adId = block.dataset.id;
+    var platform = getPlatformKey(adId);
+    if (!platform) return;
+    var sizes = _platformSizes[platform];
+    var lockCol = block.querySelector('.ad-lock-col');
+    var imgArea = block.querySelector('.li-img, .fb-img, .rd-img');
+    if (!imgArea) return;
+
+    var currentIdx = 0;
+    if (saved[adId]) {
+      var si = sizes.indexOf(saved[adId]);
+      if (si > -1) currentIdx = si;
+    }
+
+    var btn = document.createElement('button');
+    btn.className = 'resize-btn';
+    btn.title = 'Change aspect ratio';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg><span class="resize-label">' + _sizeLabels[sizes[currentIdx]] + '</span>';
+    lockCol.appendChild(btn);
+
+    if (currentIdx > 0) applySize(imgArea, sizes[currentIdx]);
+
+    btn.onclick = function() {
+      currentIdx = (currentIdx + 1) % sizes.length;
+      var ratio = sizes[currentIdx];
+      applySize(imgArea, ratio);
+      btn.querySelector('.resize-label').textContent = _sizeLabels[ratio];
+      var s = loadSizesLocal();
+      s[adId] = ratio;
+      saveSizesLocal(s);
+    };
+  });
+})();
+
 // ── Comments ──
 var COMMENT_AUTHOR_KEY = 'norton-revamp-comment-author';
 var COMMENT_STORE_KEY = 'norton-revamp-comments-v1';

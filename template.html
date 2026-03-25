@@ -244,6 +244,12 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f0f0;c
 .rd-actions{display:flex;gap:14px;font-size:12px;color:#878a8c;font-weight:600;}
 .rd-cta{background:#0079d3;color:#fff;border:none;font-size:13px;font-weight:700;padding:8px 22px;border-radius:20px;cursor:pointer;font-family:inherit;letter-spacing:.3px;}
 
+/* ═══ RESIZE ═══ */
+.resize-btn{width:28px;height:28px;border-radius:6px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#bbb;transition:all .15s;margin-top:4px;position:relative;}
+.resize-btn:hover{border-color:#666;color:#666;}
+.resize-label{position:absolute;top:-1px;right:-6px;background:#242424;color:#fff;font-size:7px;font-weight:700;padding:1px 3px;border-radius:3px;line-height:1.2;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s ease;}
+.resize-btn:hover .resize-label{opacity:1;}
+
 /* ═══ COMMENTS ═══ */
 .comment-btn{width:28px;height:28px;border-radius:6px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#bbb;transition:all .15s;margin-top:4px;position:relative;}
 .comment-btn:hover{border-color:#666;color:#666;}
@@ -392,7 +398,7 @@ body.print-mode .li-card,body.print-mode .fb-card,body.print-mode .rd-card{max-w
 
 <div class="columns-container">
   <div class="column" id="col-linkedin">
-    <div class="column-header"><h2>LinkedIn</h2><div class="col-count">15 ads · 1200×628 landscape</div></div>
+    <div class="column-header"><h2>LinkedIn</h2><div class="col-count">15 ads</div></div>
     <div class="cat-separator"><h3>General Product</h3></div>
 <div class="ad-block" data-id="li-gp-opp">
   <div class="ad-lock-col">
@@ -1230,7 +1236,7 @@ Start free → revamp.norton.com</div>
 </div>
   </div>
   <div class="column" id="col-meta">
-    <div class="column-header"><h2>Meta (Facebook / Instagram)</h2><div class="col-count">15 ads · 1080×1080 square</div></div>
+    <div class="column-header"><h2>Meta (Facebook / Instagram)</h2><div class="col-count">15 ads</div></div>
     <div class="cat-separator"><h3>General Product</h3></div>
 <div class="ad-block" data-id="meta-gp-opp">
   <div class="ad-lock-col">
@@ -2056,7 +2062,7 @@ Start free → revamp.norton.com</div>
 </div>
   </div>
   <div class="column" id="col-reddit">
-    <div class="column-header"><h2>Reddit</h2><div class="col-count">15 ads · Promoted Post</div></div>
+    <div class="column-header"><h2>Reddit</h2><div class="col-count">15 ads</div></div>
     <div class="cat-separator"><h3>General Product</h3></div>
 <div class="ad-block" data-id="rd-gp-opp">
   <div class="ad-lock-col">
