@@ -22,4 +22,12 @@ await sql`
   )
 `;
 
-console.log("✅ ad_edits table created (or already exists)");
+await sql`
+  CREATE TABLE IF NOT EXISTS ad_approvals (
+    ad_id TEXT PRIMARY KEY,
+    approved BOOLEAN NOT NULL DEFAULT false,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )
+`;
+
+console.log("✅ ad_edits and ad_approvals tables created (or already exist)");

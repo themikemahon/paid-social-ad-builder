@@ -114,56 +114,107 @@ async function saveEdits() {
 
 restoreEdits();
 
-// ── Approve / Ready-for-Design ──
-var APPROVE_KEY = 'norton-revamp-approved-v1';
-function getApprovedSet() {
-  try { return new Set(JSON.parse(localStorage.getItem(APPROVE_KEY)) || []); } catch(e) { return new Set(); }
-}
-function saveApprovedSet(s) {
-  try { localStorage.setItem(APPROVE_KEY, JSON.stringify(Array.from(s))); } catch(e) {}
-}
-function toggleApprove(btn) {
-  var block = btn.closest('.ad-block');
-  var id = block.dataset.id;
+// ── Approve / Ready-for-Design (DB-backed) ──
+function applyApprovalState(id, isApproved) {
+  var block = document.querySelector('.ad-block[data-id="' + id + '"]');
+  if (!block) return;
   var lockBtn = block.querySelector('.lock-btn');
-  var approved = getApprovedSet();
-  if (btn.classList.contains('approved')) {
-    btn.classList.remove('approved');
-    block.classList.remove('approved-block');
-    lockBtn.classList.remove('finalized');
-    btn.title = 'Mark as ready for design';
-    approved.delete(id);
-  } else {
+  var approveBtn = block.querySelector('.approve-btn');
+  if (isApproved) {
     if (!lockBtn.classList.contains('locked')) {
       lockBtn.classList.add('locked');
       block.querySelectorAll('[contenteditable]').forEach(function(el) { el.setAttribute('contenteditable', 'false'); });
     }
-    btn.classList.add('approved');
-    block.classList.add('approved-block');
     lockBtn.classList.add('finalized');
-    btn.title = 'Approved — click to undo';
-    approved.add(id);
+    block.classList.add('approved-block');
+    if (approveBtn) {
+      approveBtn.classList.add('approved');
+      approveBtn.title = 'Approved — click to undo';
+    }
+  } else {
+    lockBtn.classList.remove('finalized');
+    block.classList.remove('approved-block');
+    if (approveBtn) {
+      approveBtn.classList.remove('approved');
+      approveBtn.title = 'Mark as ready for design';
+    }
   }
-  saveApprovedSet(approved);
 }
-(function initApproveButtons() {
-  var approved = getApprovedSet();
+
+async function fetchApprovals() {
+  try {
+    var res = await fetch('/api/approvals');
+    return await res.json();
+  } catch(e) { return {}; }
+}
+
+async function toggleApprove(btn) {
+  var block = btn.closest('.ad-block');
+  var id = block.dataset.id;
+  var isApproved = !btn.classList.contains('approved');
+  applyApprovalState(id, isApproved);
+  try {
+    await fetch('/api/approvals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ad_id: id, approved: isApproved })
+    });
+  } catch(e) { console.warn('Failed to save approval:', e); }
+}
+
+(async function initApproveButtons() {
+  var approvals = await fetchApprovals();
   document.querySelectorAll('.ad-lock-col').forEach(function(col) {
     var block = col.closest('.ad-block');
     var id = block.dataset.id;
     var btn = document.createElement('button');
-    btn.className = 'approve-btn' + (approved.has(id) ? ' approved' : '');
-    btn.title = approved.has(id) ? 'Approved — click to undo' : 'Mark as ready for design';
+    var isApproved = !!approvals[id];
+    btn.className = 'approve-btn' + (isApproved ? ' approved' : '');
+    btn.title = isApproved ? 'Approved — click to undo' : 'Mark as ready for design';
     btn.onclick = function() { toggleApprove(this); };
     btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
     col.appendChild(btn);
-    if (approved.has(id)) {
-      block.classList.add('approved-block');
-      var lockBtn = col.querySelector('.lock-btn');
-      if (lockBtn) lockBtn.classList.add('finalized');
-    }
+    if (isApproved) applyApprovalState(id, true);
   });
 })();
+
+// ── Live polling (edits + approvals every 3s) ──
+var _lastEditsJson = '';
+var _lastApprovalsJson = '';
+
+async function pollUpdates() {
+  try {
+    var editsRes = await fetch('/api/ads');
+    var edits = await editsRes.json();
+    var editsJson = JSON.stringify(edits);
+    if (editsJson !== _lastEditsJson) {
+      _lastEditsJson = editsJson;
+      document.querySelectorAll('.ad-block').forEach(function(block) {
+        var id = block.dataset.id;
+        if (!edits[id]) return;
+        block.querySelectorAll('[contenteditable]').forEach(function(el, i) {
+          if (edits[id][i] !== undefined && el.innerHTML !== edits[id][i]) {
+            if (document.activeElement !== el) el.innerHTML = edits[id][i];
+          }
+        });
+      });
+    }
+  } catch(e) {}
+  try {
+    var appRes = await fetch('/api/approvals');
+    var approvals = await appRes.json();
+    var appJson = JSON.stringify(approvals);
+    if (appJson !== _lastApprovalsJson) {
+      _lastApprovalsJson = appJson;
+      document.querySelectorAll('.ad-block').forEach(function(block) {
+        var id = block.dataset.id;
+        applyApprovalState(id, !!approvals[id]);
+      });
+    }
+  } catch(e) {}
+}
+
+setInterval(pollUpdates, 3000);
 
 var saveTimer;
 document.addEventListener('input', function(e) {
