@@ -181,6 +181,7 @@ async function toggleApprove(btn) {
 // ── Live polling (edits + approvals every 3s) ──
 var _lastEditsJson = '';
 var _lastApprovalsJson = '';
+var _lastImagesJson = '';
 
 async function pollUpdates() {
   try {
@@ -212,6 +213,25 @@ async function pollUpdates() {
       });
     }
   } catch(e) {}
+  try {
+    var imgRes = await fetch('/api/images');
+    var images = await imgRes.json();
+    var imgJson = JSON.stringify(images);
+    if (imgJson !== _lastImagesJson) {
+      _lastImagesJson = imgJson;
+      document.querySelectorAll('.ad-block').forEach(function(block) {
+        var id = block.dataset.id;
+        var area = block.querySelector('.li-img, .fb-img, .rd-img');
+        if (!area) return;
+        if (images[id]) {
+          var existing = area.querySelector('.dropped-img');
+          if (!existing || existing.src !== images[id]) applyDroppedImage(area, images[id]);
+        } else {
+          clearDroppedImage(area);
+        }
+      });
+    }
+  } catch(e) {}
 }
 
 setInterval(pollUpdates, 3000);
@@ -223,6 +243,94 @@ document.addEventListener('input', function(e) {
     saveTimer = setTimeout(saveEdits, 800);
   }
 });
+
+// ── Drag & Drop Images (DB-backed via Vercel Blob) ──
+
+function applyDroppedImage(imgArea, url) {
+  imgArea.classList.add('has-dropped-img');
+  var existing = imgArea.querySelector('.dropped-img');
+  if (existing) existing.remove();
+  var img = document.createElement('img');
+  img.className = 'dropped-img';
+  img.src = url;
+  img.alt = 'Dropped design';
+  imgArea.appendChild(img);
+}
+
+function clearDroppedImage(imgArea) {
+  imgArea.classList.remove('has-dropped-img');
+  var img = imgArea.querySelector('.dropped-img');
+  if (img) img.remove();
+}
+
+async function removeDroppedImage(imgArea, adId) {
+  clearDroppedImage(imgArea);
+  try {
+    await fetch('/api/images', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ad_id: adId })
+    });
+  } catch(e) { console.warn('Failed to delete image:', e); }
+}
+
+async function uploadDroppedImage(imgArea, adId, file) {
+  var formData = new FormData();
+  formData.append('file', file);
+  formData.append('ad_id', adId);
+  // Show preview immediately
+  var tempUrl = URL.createObjectURL(file);
+  applyDroppedImage(imgArea, tempUrl);
+  try {
+    var res = await fetch('/api/images', { method: 'POST', body: formData });
+    var data = await res.json();
+    if (data.url) applyDroppedImage(imgArea, data.url);
+  } catch(e) { console.warn('Failed to upload image:', e); }
+}
+
+(async function initDropZones() {
+  var images = {};
+  try {
+    var res = await fetch('/api/images');
+    images = await res.json();
+  } catch(e) {}
+
+  document.querySelectorAll('.li-img, .fb-img, .rd-img').forEach(function(area) {
+    var block = area.closest('.ad-block');
+    if (!block) return;
+    var adId = block.dataset.id;
+
+    var hint = document.createElement('div');
+    hint.className = 'drop-zone-hint';
+    hint.textContent = 'Drop image here';
+    area.appendChild(hint);
+
+    var removeBtn = document.createElement('button');
+    removeBtn.className = 'img-remove-btn';
+    removeBtn.innerHTML = '\\u2715';
+    removeBtn.title = 'Remove image';
+    removeBtn.onclick = function(e) {
+      e.stopPropagation();
+      removeDroppedImage(area, adId);
+    };
+    area.appendChild(removeBtn);
+
+    if (images[adId]) applyDroppedImage(area, images[adId]);
+
+    area.addEventListener('dragenter', function(e) { e.preventDefault(); area.classList.add('drag-over'); });
+    area.addEventListener('dragover', function(e) { e.preventDefault(); area.classList.add('drag-over'); });
+    area.addEventListener('dragleave', function(e) {
+      if (!area.contains(e.relatedTarget)) area.classList.remove('drag-over');
+    });
+    area.addEventListener('drop', function(e) {
+      e.preventDefault();
+      area.classList.remove('drag-over');
+      var file = e.dataTransfer.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      uploadDroppedImage(area, adId, file);
+    });
+  });
+})();
 `;
 
   return (

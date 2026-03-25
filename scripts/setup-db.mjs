@@ -30,4 +30,12 @@ await sql`
   )
 `;
 
-console.log("✅ ad_edits and ad_approvals tables created (or already exist)");
+await sql`
+  CREATE TABLE IF NOT EXISTS ad_images (
+    ad_id TEXT PRIMARY KEY,
+    blob_url TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )
+`;
+
+console.log("✅ ad_edits, ad_approvals, and ad_images tables created (or already exist)");
