@@ -302,7 +302,7 @@ async function uploadDroppedImage(imgArea, adId, file) {
 
     var hint = document.createElement('div');
     hint.className = 'drop-zone-hint';
-    hint.textContent = 'Drop image here';
+    hint.innerHTML = '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#00c850" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
     area.appendChild(hint);
 
     var removeBtn = document.createElement('button');
@@ -317,8 +317,15 @@ async function uploadDroppedImage(imgArea, adId, file) {
 
     if (images[adId]) applyDroppedImage(area, images[adId]);
 
-    area.addEventListener('dragenter', function(e) { e.preventDefault(); area.classList.add('drag-over'); });
-    area.addEventListener('dragover', function(e) { e.preventDefault(); area.classList.add('drag-over'); });
+    function isValidImageDrag(e) {
+      if (e.dataTransfer && e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        var type = e.dataTransfer.items[0].type;
+        return type === 'image/png' || type === 'image/jpeg';
+      }
+      return false;
+    }
+    area.addEventListener('dragenter', function(e) { e.preventDefault(); if (isValidImageDrag(e)) area.classList.add('drag-over'); });
+    area.addEventListener('dragover', function(e) { e.preventDefault(); if (isValidImageDrag(e)) area.classList.add('drag-over'); });
     area.addEventListener('dragleave', function(e) {
       if (!area.contains(e.relatedTarget)) area.classList.remove('drag-over');
     });
@@ -326,7 +333,7 @@ async function uploadDroppedImage(imgArea, adId, file) {
       e.preventDefault();
       area.classList.remove('drag-over');
       var file = e.dataTransfer.files[0];
-      if (!file || !file.type.startsWith('image/')) return;
+      if (!file || (file.type !== 'image/png' && file.type !== 'image/jpeg')) return;
       uploadDroppedImage(area, adId, file);
     });
   });
