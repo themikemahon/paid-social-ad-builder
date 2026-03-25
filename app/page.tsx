@@ -125,7 +125,10 @@ document.addEventListener('input', function(e) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styleContent }} />
-      <div dangerouslySetInnerHTML={{ __html: bodyContent }} />
+      <div
+        style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}
+        dangerouslySetInnerHTML={{ __html: bodyContent }}
+      />
       <script dangerouslySetInnerHTML={{ __html: clientScript }} />
     </>
   );
