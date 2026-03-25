@@ -14,39 +14,50 @@ export default function Home() {
 
   // The new script that replaces localStorage with API calls
   const clientScript = `
+function togglePrintView() {
+  document.body.classList.toggle('print-mode');
+  document.documentElement.classList.toggle('print-mode');
+  var isPrint = document.body.classList.contains('print-mode');
+  document.querySelectorAll('.annotation').forEach(function(a) {
+    if (isPrint) a.classList.add('open');
+    else a.classList.remove('open');
+  });
+  if (isPrint) window.scrollTo(0, 0);
+}
+
 function toggleLock(btn) {
-  const block = btn.closest('.ad-block');
-  const editables = block.querySelectorAll('[contenteditable]');
-  const isLocked = btn.classList.contains('locked');
+  var block = btn.closest('.ad-block');
+  var editables = block.querySelectorAll('[contenteditable]');
+  var isLocked = btn.classList.contains('locked');
   if (isLocked) {
     btn.classList.remove('locked');
-    editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+    editables.forEach(function(el) { el.setAttribute('contenteditable', 'true'); });
   } else {
     btn.classList.add('locked');
-    editables.forEach(el => el.setAttribute('contenteditable', 'false'));
+    editables.forEach(function(el) { el.setAttribute('contenteditable', 'false'); });
   }
 }
 
-let activeCategory = 'all';
-let activeAudience = 'all';
+var activeCategory = 'all';
+var activeAudience = 'all';
 
 function applyFilters() {
-  document.querySelectorAll('.ad-block').forEach(block => {
-    const cat = block.querySelector('.tag-cat');
-    const aud = block.querySelector('.tag-aud');
-    const catMatch = activeCategory === 'all' || (cat && cat.textContent === activeCategory);
-    const audMatch = activeAudience === 'all' || (aud && aud.textContent === activeAudience);
+  document.querySelectorAll('.ad-block').forEach(function(block) {
+    var cat = block.querySelector('.tag-cat');
+    var aud = block.querySelector('.tag-aud');
+    var catMatch = activeCategory === 'all' || (cat && cat.textContent === activeCategory);
+    var audMatch = activeAudience === 'all' || (aud && aud.textContent === activeAudience);
     block.style.display = (catMatch && audMatch) ? 'flex' : 'none';
   });
-  document.querySelectorAll('.cat-separator').forEach(sep => {
-    const sepCat = sep.querySelector('h3').textContent;
+  document.querySelectorAll('.cat-separator').forEach(function(sep) {
+    var sepCat = sep.querySelector('h3').textContent;
     sep.style.display = (activeCategory === 'all' || sepCat === activeCategory) ? 'block' : 'none';
   });
 }
 
 function filterAds(category) {
   activeCategory = category;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
   event.target.classList.add('active');
   applyFilters();
 }
@@ -60,13 +71,13 @@ function filterAudience(audience) {
 
 async function restoreEdits() {
   try {
-    const res = await fetch('/api/ads');
-    const edits = await res.json();
+    var res = await fetch('/api/ads');
+    var edits = await res.json();
     if (!edits || Object.keys(edits).length === 0) return;
-    document.querySelectorAll('.ad-block').forEach(block => {
-      const id = block.dataset.id;
+    document.querySelectorAll('.ad-block').forEach(function(block) {
+      var id = block.dataset.id;
       if (!edits[id]) return;
-      block.querySelectorAll('[contenteditable]').forEach((el, i) => {
+      block.querySelectorAll('[contenteditable]').forEach(function(el, i) {
         if (edits[id][i] !== undefined) el.innerHTML = edits[id][i];
       });
     });
@@ -76,11 +87,11 @@ async function restoreEdits() {
 }
 
 function collectEdits() {
-  const edits = {};
-  document.querySelectorAll('.ad-block').forEach(block => {
-    const id = block.dataset.id;
-    const fields = {};
-    block.querySelectorAll('[contenteditable]').forEach((el, i) => {
+  var edits = {};
+  document.querySelectorAll('.ad-block').forEach(function(block) {
+    var id = block.dataset.id;
+    var fields = {};
+    block.querySelectorAll('[contenteditable]').forEach(function(el, i) {
       fields[i] = el.innerHTML;
     });
     edits[id] = fields;
@@ -102,8 +113,8 @@ async function saveEdits() {
 
 restoreEdits();
 
-let saveTimer;
-document.addEventListener('input', e => {
+var saveTimer;
+document.addEventListener('input', function(e) {
   if (e.target.closest('[contenteditable]')) {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveEdits, 800);
@@ -111,21 +122,11 @@ document.addEventListener('input', e => {
 });
 `;
 
-  const fontLink =
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Caveat:wght@400;500;600;700&display=swap';
-
   return (
-    <html lang="en">
-      <head>
-        <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link href={fontLink} rel="stylesheet" />
-        <style dangerouslySetInnerHTML={{ __html: styleContent }} />
-      </head>
-      <body>
-        <div dangerouslySetInnerHTML={{ __html: bodyContent }} />
-        <script dangerouslySetInnerHTML={{ __html: clientScript }} />
-      </body>
-    </html>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: styleContent }} />
+      <div dangerouslySetInnerHTML={{ __html: bodyContent }} />
+      <script dangerouslySetInnerHTML={{ __html: clientScript }} />
+    </>
   );
 }

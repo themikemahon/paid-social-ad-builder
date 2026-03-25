@@ -241,7 +241,50 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f0f0;c
 [contenteditable="true"]{outline:2px dashed #FEEB29;outline-offset:2px;border-radius:2px;cursor:text;}
 [contenteditable="true"]:focus{outline-color:#f5a623;background:rgba(254,235,41,.06);}
 
-/* No stacking — columns scroll horizontally when window is narrow */
+/* ═══ PRINT BUTTON ═══ */
+.print-btn{display:flex;align-items:center;gap:5px;border:1px solid #ddd;background:#fff;color:#666;font-size:11px;font-weight:600;padding:5px 14px;border-radius:16px;cursor:pointer;font-family:inherit;transition:all .15s;margin-left:4px;}
+.print-btn:hover{background:#242424;color:#fff;border-color:#242424;}
+.print-btn svg{flex-shrink:0;}
+
+/* ═══ PRINT VIEW MODE ═══ */
+html.print-mode,body.print-mode{overflow:auto !important;height:auto !important;}
+body.print-mode .page-header{position:relative;}
+body.print-mode .print-btn{background:#242424;color:#fff;border-color:#242424;}
+body.print-mode .print-btn .print-label::after{content:' (Exit)';}
+body.print-mode .columns-container{display:block;overflow:visible;height:auto;}
+body.print-mode .column{overflow:visible;height:auto;min-width:0;border-right:none;max-width:480px;margin:0 auto;padding:0 20px 40px;}
+body.print-mode .column-header{position:relative;top:auto;z-index:auto;background:none;border-bottom:2px solid #242424;padding:40px 0 12px;margin-bottom:20px;}
+body.print-mode .column-header h2{font-size:16px;color:#242424;}
+body.print-mode .cat-separator{position:relative;top:auto;z-index:auto;background:none;}
+body.print-mode .cat-separator::after{display:none;}
+body.print-mode .ad-block{max-width:480px;margin-left:auto;margin-right:auto;}
+body.print-mode .ad-lock-col{display:none;}
+body.print-mode .annotation{border-left:none;background:none;border-radius:0;margin-top:8px;}
+body.print-mode .annotation-toggle{display:none;}
+body.print-mode .annotation-body{display:block;padding:4px 0 0;}
+body.print-mode .li-card,body.print-mode .fb-card,body.print-mode .rd-card{max-width:100%;}
+
+/* ═══ PRINT MEDIA ═══ */
+@page{size:letter;margin:0.5in;}
+@media print{
+  html,body{overflow:visible !important;height:auto !important;}
+  .page-header{position:relative !important;}
+  .header-filter{display:none !important;}
+  .columns-container{display:block !important;overflow:visible !important;height:auto !important;}
+  .column{overflow:visible !important;height:auto !important;min-width:0 !important;border-right:none !important;max-width:100% !important;margin:0 auto !important;padding:0 12px 20px !important;}
+  .column-header{position:relative !important;top:auto !important;border-bottom:2px solid #242424;padding:24px 0 8px;margin-bottom:12px;}
+  .column-header h2{font-size:14px;color:#242424;}
+  .cat-separator{position:relative !important;top:auto !important;}
+  .cat-separator::after{display:none !important;}
+  .ad-block{max-width:420px !important;margin-left:auto !important;margin-right:auto !important;page-break-before:always;}
+  .ad-lock-col{display:none !important;}
+  .annotation{border-left:none !important;background:none !important;border-radius:0 !important;margin-top:8px !important;}
+  .annotation-toggle{display:none !important;}
+  .annotation-body{display:block !important;padding:4px 0 0 !important;font-size:10px !important;}
+  .annotation h4{font-size:11px !important;}
+  .li-card,.fb-card,.rd-card{max-width:100% !important;}
+  .print-btn{display:none !important;}
+}
 </style>
 </head>
 <body>
@@ -263,6 +306,10 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f0f0;c
       <option value="Growth Drivers">Growth Drivers</option>
       <option value="Community Creators">Community Creators</option>
     </select>
+    <button class="print-btn" onclick="togglePrintView()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span class="print-label">Print View</span>
+    </button>
   </div>
 </div>
 
