@@ -26,6 +26,7 @@ function togglePrintView() {
 }
 
 function toggleLock(btn) {
+  if (btn.classList.contains('finalized')) return;
   var block = btn.closest('.ad-block');
   var editables = block.querySelectorAll('[contenteditable]');
   var isLocked = btn.classList.contains('locked');
@@ -112,6 +113,57 @@ async function saveEdits() {
 }
 
 restoreEdits();
+
+// ── Approve / Ready-for-Design ──
+var APPROVE_KEY = 'norton-revamp-approved-v1';
+function getApprovedSet() {
+  try { return new Set(JSON.parse(localStorage.getItem(APPROVE_KEY)) || []); } catch(e) { return new Set(); }
+}
+function saveApprovedSet(s) {
+  try { localStorage.setItem(APPROVE_KEY, JSON.stringify(Array.from(s))); } catch(e) {}
+}
+function toggleApprove(btn) {
+  var block = btn.closest('.ad-block');
+  var id = block.dataset.id;
+  var lockBtn = block.querySelector('.lock-btn');
+  var approved = getApprovedSet();
+  if (btn.classList.contains('approved')) {
+    btn.classList.remove('approved');
+    block.classList.remove('approved-block');
+    lockBtn.classList.remove('finalized');
+    btn.title = 'Mark as ready for design';
+    approved.delete(id);
+  } else {
+    if (!lockBtn.classList.contains('locked')) {
+      lockBtn.classList.add('locked');
+      block.querySelectorAll('[contenteditable]').forEach(function(el) { el.setAttribute('contenteditable', 'false'); });
+    }
+    btn.classList.add('approved');
+    block.classList.add('approved-block');
+    lockBtn.classList.add('finalized');
+    btn.title = 'Approved — click to undo';
+    approved.add(id);
+  }
+  saveApprovedSet(approved);
+}
+(function initApproveButtons() {
+  var approved = getApprovedSet();
+  document.querySelectorAll('.ad-lock-col').forEach(function(col) {
+    var block = col.closest('.ad-block');
+    var id = block.dataset.id;
+    var btn = document.createElement('button');
+    btn.className = 'approve-btn' + (approved.has(id) ? ' approved' : '');
+    btn.title = approved.has(id) ? 'Approved — click to undo' : 'Mark as ready for design';
+    btn.onclick = function() { toggleApprove(this); };
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+    col.appendChild(btn);
+    if (approved.has(id)) {
+      block.classList.add('approved-block');
+      var lockBtn = col.querySelector('.lock-btn');
+      if (lockBtn) lockBtn.classList.add('finalized');
+    }
+  });
+})();
 
 var saveTimer;
 document.addEventListener('input', function(e) {
