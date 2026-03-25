@@ -1,4 +1,14 @@
 import { neon } from "@neondatabase/serverless";
+import { readFileSync } from "fs";
+
+// Load .env.local if present
+try {
+  const envFile = readFileSync(".env.local", "utf-8");
+  for (const line of envFile.split("\n")) {
+    const [key, ...rest] = line.split("=");
+    if (key && rest.length) process.env[key.trim()] = rest.join("=").trim();
+  }
+} catch {}
 
 const sql = neon(process.env.DATABASE_URL);
 
