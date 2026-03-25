@@ -41,7 +41,14 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f0f0;c
 .lock-btn.locked .icon-unlock{display:none;}
 .lock-btn:not(.locked) .icon-lock{display:none;}
 .lock-btn:not(.locked){background:#FEEB29;border-color:#FEEB29;color:#242424;}
-.ad-content{flex:1;min-width:0;max-width:474px;overflow:hidden;}
+.lock-btn.finalized{opacity:.35;pointer-events:none;cursor:default;}
+.approve-btn{width:28px;height:28px;border-radius:6px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#bbb;transition:all .15s;margin-top:4px;}
+.approve-btn:hover{border-color:#4caf50;color:#4caf50;}
+.approve-btn.approved{background:#4caf50;border-color:#4caf50;color:#fff;cursor:default;}
+.ad-block.approved-block .li-card,
+.ad-block.approved-block .fb-card,
+.ad-block.approved-block .rd-card{outline:2px solid #4caf50;outline-offset:2px;}
+.ad-content{flex:1;min-width:0;max-width:474px;}
 .ad-tag{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
 .tag-cat,.tag-aud,.tag-fmt{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:3px 8px;border-radius:3px;}
 .tag-cat{background:#e8e8e8;color:#888;}
@@ -259,6 +266,9 @@ body.print-mode .cat-separator{position:relative;top:auto;z-index:auto;backgroun
 body.print-mode .cat-separator::after{display:none;}
 body.print-mode .ad-block{max-width:480px;margin-left:auto;margin-right:auto;}
 body.print-mode .ad-lock-col{display:none;}
+body.print-mode .ad-block.approved-block .li-card,
+body.print-mode .ad-block.approved-block .fb-card,
+body.print-mode .ad-block.approved-block .rd-card{outline:none;}
 body.print-mode .annotation{border-left:none;background:none;border-radius:0;margin-top:8px;}
 body.print-mode .annotation-toggle{display:none;}
 body.print-mode .annotation-body{display:block;padding:4px 0 0;}
@@ -278,6 +288,9 @@ body.print-mode .li-card,body.print-mode .fb-card,body.print-mode .rd-card{max-w
   .cat-separator::after{display:none !important;}
   .ad-block{max-width:420px !important;margin-left:auto !important;margin-right:auto !important;page-break-before:always;}
   .ad-lock-col{display:none !important;}
+  .ad-block.approved-block .li-card,
+  .ad-block.approved-block .fb-card,
+  .ad-block.approved-block .rd-card{outline:none !important;}
   .annotation{border-left:none !important;background:none !important;border-radius:0 !important;margin-top:8px !important;}
   .annotation-toggle{display:none !important;}
   .annotation-body{display:block !important;padding:4px 0 0 !important;font-size:10px !important;}
@@ -2759,6 +2772,7 @@ Start free → revamp.norton.com</div>
 
 <script>
 function toggleLock(btn) {
+  if (btn.classList.contains('finalized')) return;
   const block = btn.closest('.ad-block');
   const editables = block.querySelectorAll('[contenteditable]');
   const isLocked = btn.classList.contains('locked');
@@ -2841,6 +2855,61 @@ document.addEventListener('input', e => {
     saveTimer = setTimeout(saveEdits, 500);
   }
 });
+
+/* ═══ APPROVE / READY-FOR-DESIGN ═══ */
+const APPROVE_KEY = 'norton-revamp-approved-v1';
+
+function getApprovedSet() {
+  try { return new Set(JSON.parse(localStorage.getItem(APPROVE_KEY)) || []); } catch(e) { return new Set(); }
+}
+function saveApprovedSet(s) {
+  try { localStorage.setItem(APPROVE_KEY, JSON.stringify([...s])); } catch(e) {}
+}
+
+function toggleApprove(btn) {
+  const block = btn.closest('.ad-block');
+  const id = block.dataset.id;
+  const lockBtn = block.querySelector('.lock-btn');
+  const approved = getApprovedSet();
+
+  if (btn.classList.contains('approved')) {
+    btn.classList.remove('approved');
+    block.classList.remove('approved-block');
+    lockBtn.classList.remove('finalized');
+    btn.title = 'Mark as ready for design';
+    approved.delete(id);
+  } else {
+    if (!lockBtn.classList.contains('locked')) {
+      lockBtn.classList.add('locked');
+      block.querySelectorAll('[contenteditable]').forEach(el => el.setAttribute('contenteditable', 'false'));
+    }
+    btn.classList.add('approved');
+    block.classList.add('approved-block');
+    lockBtn.classList.add('finalized');
+    btn.title = 'Approved — click to undo';
+    approved.add(id);
+  }
+  saveApprovedSet(approved);
+}
+
+(function initApproveButtons() {
+  const approved = getApprovedSet();
+  document.querySelectorAll('.ad-lock-col').forEach(col => {
+    const block = col.closest('.ad-block');
+    const id = block.dataset.id;
+    const btn = document.createElement('button');
+    btn.className = 'approve-btn' + (approved.has(id) ? ' approved' : '');
+    btn.title = approved.has(id) ? 'Approved — click to undo' : 'Mark as ready for design';
+    btn.onclick = function(){ toggleApprove(this); };
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+    col.appendChild(btn);
+    if (approved.has(id)) {
+      block.classList.add('approved-block');
+      const lockBtn = col.querySelector('.lock-btn');
+      if (lockBtn) lockBtn.classList.add('finalized');
+    }
+  });
+})();
 </script>
 
 </body>
