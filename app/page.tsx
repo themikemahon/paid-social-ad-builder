@@ -112,7 +112,7 @@ async function saveEdits() {
   }
 }
 
-restoreEdits();
+restoreEdits().then(function() { initLinkedInSeeMore(); });
 
 // ── Approve / Ready-for-Design (DB-backed) ──
 function applyApprovalState(id, isApproved) {
@@ -253,6 +253,7 @@ async function pollUpdates() {
       }
     }
   } catch(e) {}
+  initLinkedInSeeMore();
 }
 
 setInterval(pollUpdates, 3000);
@@ -388,19 +389,22 @@ async function uploadDroppedImage(imgArea, adId, file) {
 // ── LinkedIn See More ──
 var LI_TRUNCATE_CHARS = 150;
 
-(function initLinkedInSeeMore() {
+function initLinkedInSeeMore() {
   document.querySelectorAll('.li-intro').forEach(function(intro) {
-    var fullText = intro.textContent;
-    if (fullText.length <= LI_TRUNCATE_CHARS) return;
-
-    var fullHtml = intro.innerHTML;
-    var truncated = fullText.substring(0, LI_TRUNCATE_CHARS);
-    // Don't cut in the middle of a word
-    var lastSpace = truncated.lastIndexOf(' ');
-    if (lastSpace > LI_TRUNCATE_CHARS * 0.7) truncated = truncated.substring(0, lastSpace);
+    // Store original content on first run
+    if (!intro._seeMoreFull) {
+      var fullText = intro.textContent;
+      if (fullText.length <= LI_TRUNCATE_CHARS) return;
+      intro._seeMoreFull = intro.innerHTML;
+      var truncated = fullText.substring(0, LI_TRUNCATE_CHARS);
+      var lastSpace = truncated.lastIndexOf(' ');
+      if (lastSpace > LI_TRUNCATE_CHARS * 0.7) truncated = truncated.substring(0, lastSpace);
+      intro._seeMoreTrunc = truncated;
+    }
+    if (!intro._seeMoreFull) return;
 
     function collapse() {
-      intro.innerHTML = truncated.replace(/\\n/g, ' ').replace(/\\s+/g, ' ') + '<span class="see-more-ellipsis">… <button class="see-more-btn">see more</button></span>';
+      intro.innerHTML = intro._seeMoreTrunc.replace(/\\n/g, ' ').replace(/\\s+/g, ' ') + '<span class="see-more-ellipsis">… <button class="see-more-btn">see more</button></span>';
       intro.querySelector('.see-more-btn').onclick = function(e) {
         e.stopPropagation();
         expand();
@@ -408,12 +412,19 @@ var LI_TRUNCATE_CHARS = 150;
     }
 
     function expand() {
-      intro.innerHTML = fullHtml;
+      intro.innerHTML = intro._seeMoreFull + '<div class="see-less-wrap"><button class="see-more-btn">see less</button></div>';
+      intro.querySelector('.see-less-wrap .see-more-btn').onclick = function(e) {
+        e.stopPropagation();
+        collapse();
+      };
     }
 
-    collapse();
+    // Only collapse if not already showing truncated view
+    if (!intro.querySelector('.see-more-ellipsis')) {
+      collapse();
+    }
   });
-})();
+};
 
 // ── Column Collapse ──
 var _platformLogos = {
