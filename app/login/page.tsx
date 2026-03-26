@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,29 +32,37 @@ export default function LoginPage() {
   }
 
   return (
+    <form onSubmit={handleSubmit} style={styles.card}>
+      <div style={styles.logo}>
+        <svg viewBox="0 0 40 40" width="48" height="48">
+          <rect width="40" height="40" rx="8" fill="#FEEB29" />
+          <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontSize="20" fontWeight="800" fill="#242424">N</text>
+        </svg>
+      </div>
+      <h1 style={styles.title}>Paid Social Ad Builder</h1>
+      <p style={styles.projectName}>Norton Revamp</p>
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        style={styles.input}
+        autoFocus
+      />
+      {error && <p style={styles.error}>{error}</p>}
+      <button type="submit" disabled={loading} style={styles.button}>
+        {loading ? "..." : "Enter"}
+      </button>
+    </form>
+  );
+}
+
+export default function LoginPage() {
+  return (
     <div style={styles.wrapper}>
-      <form onSubmit={handleSubmit} style={styles.card}>
-        <div style={styles.logo}>
-          <svg viewBox="0 0 40 40" width="48" height="48">
-            <rect width="40" height="40" rx="8" fill="#FEEB29" />
-            <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontSize="20" fontWeight="800" fill="#242424">N</text>
-          </svg>
-        </div>
-        <h1 style={styles.title}>Paid Social Ad Builder</h1>
-        <p style={styles.projectName}>Norton Revamp</p>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          style={styles.input}
-          autoFocus
-        />
-        {error && <p style={styles.error}>{error}</p>}
-        <button type="submit" disabled={loading} style={styles.button}>
-          {loading ? "..." : "Enter"}
-        </button>
-      </form>
+      <Suspense>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }
