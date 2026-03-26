@@ -400,10 +400,12 @@ function initLinkedInSeeMore() {
       var lastSpace = truncated.lastIndexOf(' ');
       if (lastSpace > LI_TRUNCATE_CHARS * 0.7) truncated = truncated.substring(0, lastSpace);
       intro._seeMoreTrunc = truncated;
+      intro._seeMoreExpanded = false;
     }
     if (!intro._seeMoreFull) return;
 
     function collapse() {
+      intro._seeMoreExpanded = false;
       intro.innerHTML = intro._seeMoreTrunc.replace(/\\n/g, ' ').replace(/\\s+/g, ' ') + '<span class="see-more-ellipsis">… <button class="see-more-btn">see more</button></span>';
       intro.querySelector('.see-more-btn').onclick = function(e) {
         e.stopPropagation();
@@ -412,6 +414,7 @@ function initLinkedInSeeMore() {
     }
 
     function expand() {
+      intro._seeMoreExpanded = true;
       intro.innerHTML = intro._seeMoreFull + '<div class="see-less-wrap"><button class="see-more-btn">see less</button></div>';
       intro.querySelector('.see-less-wrap .see-more-btn').onclick = function(e) {
         e.stopPropagation();
@@ -419,9 +422,11 @@ function initLinkedInSeeMore() {
       };
     }
 
-    // Only collapse if not already showing truncated view
-    if (!intro.querySelector('.see-more-ellipsis')) {
+    // Respect user's current expanded/collapsed state
+    if (!intro._seeMoreExpanded) {
       collapse();
+    } else {
+      expand();
     }
   });
 };
