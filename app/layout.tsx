@@ -1,4 +1,7 @@
-export const metadata = { title: "Paid Social Ad Builder — Norton Revamp" };
+export const metadata = {
+  title: "Paid Social Ad Builder — Norton Revamp",
+  viewport: "width=device-width, initial-scale=1",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

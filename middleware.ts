@@ -5,7 +5,7 @@ export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   if (
     path === "/login" ||
-    path.startsWith("/api/auth") ||
+    path.startsWith("/api/") ||
     path.startsWith("/_next") ||
     path.startsWith("/favicon")
   ) {

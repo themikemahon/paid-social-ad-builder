@@ -327,6 +327,27 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f0f0;c
 [contenteditable="true"]{outline:2px dashed #FEEB29;outline-offset:2px;border-radius:2px;cursor:text;}
 [contenteditable="true"]:focus{outline-color:#f5a623;background:rgba(254,235,41,.06);}
 
+/* ═══ MOBILE ═══ */
+@media (max-width: 900px) {
+  .page-header{padding:16px;gap:8px;}
+  .page-header h1{font-size:15px;}
+  .page-header h1 .file-name{font-size:13px;}
+  .header-filter{width:100%;}
+  .columns-container{flex-direction:column;overflow-y:auto;overflow-x:hidden;}
+  .column{min-width:0 !important;max-width:none !important;width:100% !important;flex:none !important;border-right:none;border-bottom:1px solid #ddd;height:auto !important;overflow:visible !important;padding:0 12px 20px;}
+  .column:last-child{border-bottom:none;}
+  .column-header{position:relative;top:auto;}
+  .cat-separator{position:relative;top:auto;}
+  .cat-separator::after{display:none;}
+  .ad-block{max-width:none;}
+  .ad-lock-col{padding-top:28px;}
+  .column.collapsed{max-width:none !important;flex:none !important;padding:12px !important;min-width:0 !important;}
+  .column.collapsed .col-collapsed-logo{padding-top:0;}
+  .col-collapse-btn{display:none;}
+  .print-btn{display:none;}
+  .li-card,.fb-card,.rd-card{max-width:100%;}
+}
+
 /* ═══ PRINT BUTTON ═══ */
 .print-btn{display:flex;align-items:center;gap:5px;border:1px solid #ddd;background:#fff;color:#666;font-size:11px;font-weight:600;padding:5px 14px;border-radius:16px;cursor:pointer;font-family:inherit;transition:all .15s;margin-left:4px;}
 .print-btn:hover{background:#242424;color:#fff;border-color:#242424;}
