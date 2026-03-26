@@ -79,6 +79,7 @@ async function restoreEdits() {
       var id = block.dataset.id;
       if (!edits[id]) return;
       block.querySelectorAll('[contenteditable]').forEach(function(el, i) {
+        if (el.classList.contains('li-intro')) return;
         if (edits[id][i] !== undefined) el.innerHTML = edits[id][i];
       });
     });
@@ -195,6 +196,7 @@ async function pollUpdates() {
         var id = block.dataset.id;
         if (!edits[id]) return;
         block.querySelectorAll('[contenteditable]').forEach(function(el, i) {
+          if (el.classList.contains('li-intro')) return;
           if (edits[id][i] !== undefined && el.innerHTML !== edits[id][i]) {
             if (document.activeElement !== el) el.innerHTML = edits[id][i];
           }
@@ -253,7 +255,6 @@ async function pollUpdates() {
       }
     }
   } catch(e) {}
-  initLinkedInSeeMore();
 }
 
 setInterval(pollUpdates, 3000);
