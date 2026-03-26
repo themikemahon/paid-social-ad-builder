@@ -295,13 +295,35 @@ async function removeDroppedImage(imgArea, adId) {
   } catch(e) { console.warn('Failed to delete image:', e); }
 }
 
+function detectAndApplyRatio(imgArea, adId, src) {
+  var img = new Image();
+  img.onload = function() {
+    var ratio = img.width / img.height;
+    var sizes = _platformSizes[getPlatformKey(adId)] || [];
+    var ratioMap = {'1.91/1': 1.91, '1/1': 1, '9/16': 0.5625, '4/3': 1.333};
+    var bestRatio = sizes[0];
+    var bestDiff = Infinity;
+    sizes.forEach(function(s) {
+      var diff = Math.abs(ratio - (ratioMap[s] || 1));
+      if (diff < bestDiff) { bestDiff = diff; bestRatio = s; }
+    });
+    imgArea.style.aspectRatio = bestRatio;
+    var resizeLabel = imgArea.closest('.ad-block').querySelector('.resize-label');
+    if (resizeLabel) resizeLabel.textContent = _sizeLabels[bestRatio];
+    var saved = loadSizesLocal();
+    saved[adId] = bestRatio;
+    saveSizesLocal(saved);
+  };
+  img.src = src;
+}
+
 async function uploadDroppedImage(imgArea, adId, file) {
   var formData = new FormData();
   formData.append('file', file);
   formData.append('ad_id', adId);
-  // Show preview immediately
   var tempUrl = URL.createObjectURL(file);
   applyDroppedImage(imgArea, tempUrl);
+  detectAndApplyRatio(imgArea, adId, tempUrl);
   try {
     var res = await fetch('/api/images', { method: 'POST', body: formData });
     var data = await res.json();
@@ -336,7 +358,10 @@ async function uploadDroppedImage(imgArea, adId, file) {
     };
     area.appendChild(removeBtn);
 
-    if (images[adId]) applyDroppedImage(area, images[adId]);
+    if (images[adId]) {
+      applyDroppedImage(area, images[adId]);
+      detectAndApplyRatio(area, adId, images[adId]);
+    }
 
     function isValidImageDrag(e) {
       if (e.dataTransfer && e.dataTransfer.items && e.dataTransfer.items.length > 0) {
@@ -357,6 +382,36 @@ async function uploadDroppedImage(imgArea, adId, file) {
       if (!file || (file.type !== 'image/png' && file.type !== 'image/jpeg')) return;
       uploadDroppedImage(area, adId, file);
     });
+  });
+})();
+
+// ── LinkedIn See More ──
+var LI_TRUNCATE_CHARS = 150;
+
+(function initLinkedInSeeMore() {
+  document.querySelectorAll('.li-intro').forEach(function(intro) {
+    var fullText = intro.textContent;
+    if (fullText.length <= LI_TRUNCATE_CHARS) return;
+
+    var fullHtml = intro.innerHTML;
+    var truncated = fullText.substring(0, LI_TRUNCATE_CHARS);
+    // Don't cut in the middle of a word
+    var lastSpace = truncated.lastIndexOf(' ');
+    if (lastSpace > LI_TRUNCATE_CHARS * 0.7) truncated = truncated.substring(0, lastSpace);
+
+    function collapse() {
+      intro.innerHTML = truncated.replace(/\\n/g, ' ').replace(/\\s+/g, ' ') + '<span class="see-more-ellipsis">… <button class="see-more-btn">see more</button></span>';
+      intro.querySelector('.see-more-btn').onclick = function(e) {
+        e.stopPropagation();
+        expand();
+      };
+    }
+
+    function expand() {
+      intro.innerHTML = fullHtml;
+    }
+
+    collapse();
   });
 })();
 
