@@ -30,7 +30,7 @@ function parseRatio(ratio: string): number {
 /**
  * Detect the closest platform-specific aspect ratio for given image dimensions.
  */
-export function detectAspectRatio(
+function detectAspectRatio(
   width: number,
   height: number,
   platform: SocialPlatform
