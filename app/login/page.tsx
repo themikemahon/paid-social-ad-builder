@@ -2,7 +2,11 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+type AuthMode = 'site' | 'user';
+
 function LoginForm() {
+  const [mode, setMode] = useState<AuthMode>('site');
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,16 +18,35 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-      if (res.ok) {
-        const from = searchParams.get("from") || "/";
-        window.location.href = from;
+      if (mode === 'user') {
+        // Email + password JWT login
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          localStorage.setItem('auth_token', data.token);
+          const from = searchParams.get("from") || "/dashboard";
+          router.push(from);
+        } else {
+          // Requirement 2.2: don't reveal which credential was wrong
+          setError("Invalid credentials");
+        }
       } else {
-        setError("Wrong password");
+        // Existing site-password flow
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+        if (res.ok) {
+          const from = searchParams.get("from") || "/dashboard";
+          window.location.href = from;
+        } else {
+          setError("Wrong password");
+        }
       }
     } catch {
       setError("Something went wrong");
@@ -41,17 +64,46 @@ function LoginForm() {
       </div>
       <h1 style={styles.title}>Paid Social Ad Builder</h1>
       <p style={styles.projectName}>Norton Revamp</p>
+
+      {/* Mode toggle */}
+      <div style={styles.modeToggle}>
+        <button
+          type="button"
+          onClick={() => { setMode('site'); setError(''); }}
+          style={{ ...styles.modeBtn, ...(mode === 'site' ? styles.modeBtnActive : {}) }}
+        >
+          Site Password
+        </button>
+        <button
+          type="button"
+          onClick={() => { setMode('user'); setError(''); }}
+          style={{ ...styles.modeBtn, ...(mode === 'user' ? styles.modeBtnActive : {}) }}
+        >
+          User Login
+        </button>
+      </div>
+
+      {mode === 'user' && (
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          style={{ ...styles.input, marginBottom: 8 }}
+          autoFocus
+        />
+      )}
       <input
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Password"
         style={styles.input}
-        autoFocus
+        autoFocus={mode === 'site'}
       />
       {error && <p style={styles.error}>{error}</p>}
       <button type="submit" disabled={loading} style={styles.button}>
-        {loading ? "..." : "Enter"}
+        {loading ? "..." : mode === 'user' ? "Sign In" : "Enter"}
       </button>
     </form>
   );
@@ -96,13 +148,31 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontWeight: 500,
     color: "#999",
-    margin: "0 0 28px",
+    margin: "0 0 20px",
     letterSpacing: "-0.2px",
   },
-  subtitle: {
-    fontSize: 13,
+  modeToggle: {
+    display: "flex",
+    gap: 0,
+    marginBottom: 16,
+    borderRadius: 8,
+    overflow: "hidden" as const,
+    border: "1px solid #ddd",
+  },
+  modeBtn: {
+    flex: 1,
+    padding: "8px 0",
+    fontSize: 12,
+    fontWeight: 600,
+    border: "none",
+    background: "#fff",
     color: "#999",
-    margin: "0 0 20px",
+    cursor: "pointer",
+    fontFamily: "inherit",
+  },
+  modeBtnActive: {
+    background: "#242424",
+    color: "#fff",
   },
   input: {
     width: "100%",
