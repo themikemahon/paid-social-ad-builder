@@ -82,7 +82,7 @@ export function parseCsv(content: string): CsvImportResult {
       secondaryCta: '',
     };
 
-    for (const [colIdx, fieldName] of columnMap) {
+    for (const [colIdx, fieldName] of Array.from(columnMap)) {
       if (colIdx < fields.length) {
         block[fieldName] = fields[colIdx];
       }
