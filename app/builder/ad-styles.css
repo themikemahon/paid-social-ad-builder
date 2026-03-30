@@ -142,8 +142,8 @@ html,body{margin:0;padding:0;}
 
 /* ═══ DROPPED IMAGES ═══ */
 .li-img,.fb-img,.rd-img{position:relative;}
-.dropped-img{width:100%;height:100%;object-fit:cover;display:block;}
-.has-dropped-img{padding:0 !important;overflow:hidden;}
+.dropped-img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;}
+.has-dropped-img{padding:0 !important;overflow:hidden;position:relative;}
 .has-dropped-img > *:not(.dropped-img):not(.img-remove-btn){display:none !important;}
 
 /* ═══ FORMAT-SPECIFIC IMAGE AREAS — LinkedIn ═══ */
